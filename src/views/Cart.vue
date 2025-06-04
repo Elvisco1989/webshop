@@ -1,93 +1,211 @@
 <template>
-    <div class="cart-container">
-      <h1>Din Kurv</h1>
-  
-      <div v-if="cartItems.length === 0" class="empty-cart">
-        <p>🛒 Din kurv er tom.</p>
-      </div>
-  
-      <div v-else>
-        <ul class="cart-list">
-          <li v-for="item in cartItems" :key="item.id" class="cart-item">
-            <div class="item-info">
-              <h3>{{ item.name }}</h3>
-              <p>{{ item.price }} kr. pr. stk.</p>
-              <div class="quantity">
-                <button @click="decreaseQuantity(item.id)">-</button>
-                <span>{{ item.quantity }}</span>
-                <button @click="increaseQuantity(item.id)">+</button>
-              </div>
+  <div class="cart-container" v-if="loaded">
+    <h1>Din Kurv</h1>
+
+    <div v-if="cartItems.length === 0" class="empty-cart">
+      <p>🛒 Din kurv er tom.</p>
+    </div>
+
+    <div v-else>
+      <ul class="cart-list">
+        <li v-for="(item, index) in cartItems" :key="item.id" class="cart-item">
+          <div class="item-info">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.imagePath }}</p>
+            <p>{{ item.price }} kr. pr. stk.</p>
+            
+            <div class="quantity">
+              <button @click="decreaseQuantity(index)">-</button>
+              <span>{{ item.quantity }}</span>
+              <button @click="increaseQuantity(index)">+</button>
             </div>
-            <div class="item-actions">
-              <p><strong>{{ item.price * item.quantity }} kr.</strong></p>
-              <button class="remove" @click="removeFromCart(item.id)">Fjern</button>
-            </div>
-          </li>
-        </ul>
-  
-        <div class="summary">
-          <p><strong>Samlet pris: {{ totalPrice }} kr.</strong></p>
-          <button class="checkout">Gå til betaling</button>
-        </div>
+          </div>
+          <div class="item-actions">
+            <p><strong>{{ item.price * item.quantity }} kr.</strong></p>
+            <button class="remove" @click="removeFromCart(item)">Fjern</button>
+          </div>
+        </li>
+      </ul>
+
+      <div class="summary">
+        <p><strong>Samlet pris: {{ totalPrice }} kr.</strong></p>
+        <button @click="checkout">Gennemfør betaling</button>
       </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        cartItems: []
-      }
-    },
-    computed: {
-      totalPrice() {
-        return this.cartItems.reduce(
-          (sum, item) => sum + item.quantity * item.price,
-          0
-        )
-      }
-    },
-    methods: {
-      loadCart() {
-        this.cartItems = JSON.parse(localStorage.getItem('cart')) || []
-      },
-      saveCart() {
-        localStorage.setItem('cart', JSON.stringify(this.cartItems))
-        window.dispatchEvent(new Event('storage'))
-      },
-      increaseQuantity(id) {
-        const item = this.cartItems.find(p => p.id === id)
-        if (item) {
-          item.quantity++
-          this.saveCart()
-        }
-      },
-      decreaseQuantity(id) {
-        const item = this.cartItems.find(p => p.id === id)
-        if (item && item.quantity > 1) {
-          item.quantity--
-        } else {
-          this.cartItems = this.cartItems.filter(p => p.id !== id)
-        }
-        this.saveCart()
-      },
-      removeFromCart(id) {
-        this.cartItems = this.cartItems.filter(p => p.id !== id)
-        this.saveCart()
-      }
-    },
-    mounted() {
-      this.loadCart()
-      window.addEventListener('storage', this.loadCart)
-    },
-    beforeUnmount() {
-      window.removeEventListener('storage', this.loadCart)
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      cartItems: [],
+      loaded: false
     }
+  },
+  computed: {
+    totalPrice() {
+      return this.cartItems.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0
+      )
+    }
+  },
+  methods: {
+    loadCart() {
+      this.cartItems = JSON.parse(localStorage.getItem('cart')) || []
+    },
+    saveCart() {
+      localStorage.setItem('cart', JSON.stringify(this.cartItems))
+      window.dispatchEvent(new Event('storage'))
+    },
+    async fetchBackendCart() {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) {
+        this.loadCart()
+        this.loaded = true
+        return
+      }
+
+      try {
+        const response = await fetch(`https://localhost:7155/api/Basket/${customerId}`)
+
+        if (!response.ok) throw new Error('Kunne ikke hente kurven fra serveren.')
+
+        const backendCart = await response.json()
+
+        this.cartItems = backendCart.map(item => ({
+          id: item.productId,
+          name: item.product.name,
+          price: item.unitPrice,
+          quantity: item.quantity,
+          stock: item.product.stock ?? 99
+        }))
+
+        this.saveCart()
+      } catch (error) {
+        console.error(error)
+        alert('Kunne ikke hente din kurv fra serveren.')
+        this.loadCart()
+      } finally {
+        this.loaded = true
+      }
+    },
+    async updateBackendBasket(item) {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) {
+        alert('Du skal være logget ind for at ændre kurven.')
+        this.$router.push('/login')
+        return
+      }
+
+      try {
+        const response = await fetch(`https://localhost:7155/api/Basket/${customerId}/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: item.id,
+            quantity: item.quantity
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Kunne ikke opdatere kurven.')
+        }
+      } catch (error) {
+        console.error(error)
+        alert('Noget gik galt ved opdatering af kurven.')
+      }
+    },
+    async increaseQuantity(index) {
+      const item = { ...this.cartItems[index] }
+      if (item.quantity < item.stock) {
+        item.quantity++
+        this.cartItems.splice(index, 1, item)
+        this.saveCart()
+        await this.updateBackendBasket(item)
+      } else {
+        alert('Du har nået maksimum lagerbeholdning.')
+      }
+    },
+    async decreaseQuantity(index) {
+      const item = { ...this.cartItems[index] }
+      if (item.quantity > 1) {
+        item.quantity--
+        this.cartItems.splice(index, 1, item)
+        this.saveCart()
+        await this.updateBackendBasket(item)
+      } else {
+        await this.removeFromCart(item)
+      }
+    },
+    async removeFromCart(item) {
+      this.cartItems = this.cartItems.filter(p => p.id !== item.id)
+      this.saveCart()
+
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) {
+        alert('Du skal være logget ind for at ændre kurven.')
+        this.$router.push('/login')
+        return
+      }
+
+      try {
+        const response = await fetch(`https://localhost:7155/api/Basket/${customerId}/remove`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: item.id })
+        })
+
+        if (!response.ok) {
+          throw new Error('Kunne ikke fjerne varen fra kurven.')
+        }
+      } catch (error) {
+        console.error(error)
+        alert('Noget gik galt ved fjernelse af varen.')
+      }
+    },
+    async checkout() {
+      const customerId = localStorage.getItem('customerId')
+      if (!customerId) {
+        alert('Du skal være logget ind for at gennemføre ordren.')
+        this.$router.push('/login')
+        return
+      }
+
+      try {
+        const response = await fetch(`https://localhost:7155/api/Orders/${customerId}/checkout`, {
+          method: 'POST'
+        })
+
+        if (!response.ok) {
+          throw new Error('Checkout fejlede')
+        }
+
+        const orderData = await response.json()
+        localStorage.setItem('latestOrder', JSON.stringify(orderData))
+
+        localStorage.removeItem('cart')
+        this.cartItems = []
+
+        this.$router.push('/checkout')
+      } catch (error) {
+        console.error(error)
+        alert('Noget gik galt under checkout.')
+      }
+    }
+  },
+  mounted() {
+    this.fetchBackendCart()
+    window.addEventListener('storage', this.loadCart)
+  },
+  beforeUnmount() {
+    window.removeEventListener('storage', this.loadCart)
   }
-  </script>
-  
-  <style scoped>
+}
+</script>
+
+<style scoped>
   .cart-container {
     padding: 2rem;
     background-color: #f4f4f4;
@@ -194,4 +312,4 @@
   .checkout:hover {
     background-color: #145522;
   }
-  </style>  
+  </style>

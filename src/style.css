@@ -77,3 +77,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+.product-img {
+  width: 10%;
+  height: 15px; /* or 200px max */
+  object-fit: cover; /* Use 'contain' if you want full image visible */
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+

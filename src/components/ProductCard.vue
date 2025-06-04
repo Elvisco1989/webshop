@@ -1,30 +1,19 @@
 <template>
-  <div class="card">
+  <div class="product-card">
     <h3>{{ product.name }}</h3>
-
     <img :src="getImageUrl(product.imagePath)" alt="Product image" class="product-img" />
-
     <p>{{ product.price }} kr.</p>
     <p>{{ product.description }}</p>
     <p>Lager: {{ product.stock }}</p>
 
-    <button
-      :class="{ added: justAdded }"
-      @click="addToCart"
-    >
-      Læg i kurv
-    </button>
+    <button @click="addToCart">Læg i kurv</button>
   </div>
 </template>
 
 <script>
 export default {
+  name: 'ProductCard',
   props: ['product'],
-  data() {
-    return {
-      justAdded: false
-    };
-  },
   methods: {
     getImageUrl(path) {
       return `https://localhost:7155/${path}`;
@@ -64,11 +53,11 @@ export default {
     this.justAdded = true;
     setTimeout(() => (this.justAdded = false), 400);
 
-  //   alert('Tilføjet til kurven!');
-  // } catch (error) {
-  //   console.error(error);
-  //   alert('Noget gik galt.');
-  // }
+    // alert('Tilføjet til kurven!');
+  } catch (error) {
+    console.error(error);
+    alert('Noget gik galt.');
+  }
 }
 
   }
@@ -76,59 +65,16 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  width: 220px;
-  padding: 1rem;
+.product-card {
   border: 1px solid #ccc;
+  padding: 1rem;
+  max-width: 250px;
   border-radius: 8px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin: 1rem;
 }
-
 .product-img {
   width: 100%;
-  height: 150px;
+  max-height: 200px;
   object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
-
-button {
-  background-color: #e0b000;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #cc9e00;
-}
-
-button.added {
-  animation: pulse 0.4s;
-  background-color: #1a4d29 !important;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    background-color: #e0b000;
-  }
-  50% {
-    transform: scale(1.1);
-    background-color: #1a4d29;
-  }
-  100% {
-    transform: scale(1);
-    background-color: #e0b000;
-  }
 }
 </style>
