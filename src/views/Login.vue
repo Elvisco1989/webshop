@@ -11,8 +11,6 @@
 </template>
 
 <script>
-import { useRouter } from 'vue-router'
-
 export default {
   data() {
     return {
@@ -22,18 +20,17 @@ export default {
       isError: false
     }
   },
-  setup() {
-    const router = useRouter()
-    return { router }
-  },
   methods: {
     async loginUser() {
       this.message = ''
       this.isError = false
+
       try {
-        const res = await fetch('https://localhost:7155/api/LoginUser', {
+        const response = await fetch('https://localhost:7155/api/LoginUser', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
             email: this.email,
             password: this.password,
@@ -41,21 +38,22 @@ export default {
           })
         })
 
-        if (res.ok) {
-          const data = await res.json()
-          if (data.customerId) {
-            localStorage.setItem('customerId', data.customerId)   // Save customerId here
-          }
-          if (data.token) {
-            localStorage.setItem('token', data.token)             // Save token here
-          }
-          localStorage.setItem('isLoggedIn', 'true')              // Optional flag
-          this.router.push('/')                                    // Redirect to home or products page
-        } else {
-          const err = await res.json()
-          this.message = 'Login failed: ' + (err.message || res.statusText)
+        if (!response.ok) {
+          const error = await response.json()
+          this.message = 'Login failed: ' + (error.message || response.statusText)
           this.isError = true
+          return
         }
+
+        const data = await response.json()
+        console.log('Login success:', data)
+
+        localStorage.setItem('customerId', data.customerId || '')
+        localStorage.setItem('token', data.token || '')
+        localStorage.setItem('role', JSON.stringify(data.roles || []))
+        localStorage.setItem('isLoggedIn', 'true')
+
+        this.$router.push('/')
       } catch (e) {
         this.message = 'Error: ' + e.message
         this.isError = true

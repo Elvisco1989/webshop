@@ -8,10 +8,7 @@
     <p>{{ product.description }}</p>
     <p>Lager: {{ product.stock }}</p>
 
-    <button
-      :class="{ added: justAdded }"
-      @click="addToCart"
-    >
+    <button :class="{ added: justAdded }" @click="addToCart">
       Læg i kurv
     </button>
   </div>
@@ -26,51 +23,53 @@ export default {
     };
   },
   methods: {
+    getBaseUrl() {
+      return import.meta.env.MODE === 'development'
+        ? 'https://localhost:7155'
+        : import.meta.env.VITE_API_URL;
+    },
     getImageUrl(path) {
-      return `https://localhost:7155/${path}`;
+      return `${this.getBaseUrl()}/${path}`;
     },
     async addToCart() {
-  const customerId = localStorage.getItem('customerId');
-  if (!customerId) {
-    alert('Du skal være logget ind for at tilføje produkter.');
-    return;
-  }
+      const customerId = localStorage.getItem('customerId');
+      if (!customerId) {
+        alert('Du skal være logget ind for at tilføje produkter.');
+        return;
+      }
 
-  try {
-    const response = await fetch(`https://localhost:7155/api/Basket/${customerId}/add`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        productId: this.product.productId || this.product.id, // try both keys
-        quantity: 1
-      }),
-    });
+      try {
+        const response = await fetch(`${this.getBaseUrl()}/api/Basket/${customerId}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: this.product.productId || this.product.id,
+            quantity: 1
+          })
+        });
 
-    if (!response.ok) {
-      throw new Error('Kunne ikke tilføje til kurven.');
+        if (!response.ok) {
+          throw new Error('Kunne ikke tilføje til kurven.');
+        }
+
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const existing = cart.find(item => (item.productId || item.id) === (this.product.productId || this.product.id));
+        if (existing) {
+          existing.quantity++;
+        } else {
+          cart.push({ ...this.product, quantity: 1 });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        window.dispatchEvent(new Event('storage'));
+
+        this.justAdded = true;
+        setTimeout(() => (this.justAdded = false), 400);
+      } catch (error) {
+        console.error(error);
+        alert('Noget gik galt.');
+      }
     }
-
-    // Update local cart UI
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existing = cart.find(item => (item.productId || item.id) === (this.product.productId || this.product.id));
-    if (existing) {
-      existing.quantity++;
-    } else {
-      cart.push({ ...this.product, quantity: 1 });
-    }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('storage'));
-
-    this.justAdded = true;
-    setTimeout(() => (this.justAdded = false), 400);
-
-  //   alert('Tilføjet til kurven!');
-  // } catch (error) {
-  //   console.error(error);
-  //   alert('Noget gik galt.');
-  // }
-}
-
   }
 };
 </script>

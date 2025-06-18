@@ -44,7 +44,13 @@ export default {
     },
     async fetchProducts() {
       try {
-        const response = await axios.get('https://localhost:7155/api/Products')
+        // === Toggle backend URL here ===
+        // For LOCAL testing, uncomment the line below:
+        // const response = await axios.get('https://localhost:7155/api/Products')
+
+        // For AZURE deployment/testing, uncomment the line below:
+        const response = await axios.get('https://hoved-opgave-datamatiker.azurewebsites.net/api/Products')
+
         this.products = response.data
       } catch (error) {
         console.error('Kunne ikke hente produkter:', error)
@@ -55,12 +61,19 @@ export default {
         const newProduct = {
           name: 'Test Produkt',
           category: 'Sodavand',
-          price: 25
+          price: 25,
+          imagePath: 'images/testprodukt.jpg', // example image path
+          stock: 10
         }
 
+        // === Toggle backend URL here ===
+        // For LOCAL testing, uncomment the line below:
         await axios.post('https://localhost:7155/api/Products', newProduct)
 
-        this.fetchProducts() // genindlæs listen
+        // For AZURE deployment/testing, uncomment the line below:
+        // await axios.post('https://hoved-opgave-datamatiker.azurewebsites.net/api/Products', newProduct)
+
+        this.fetchProducts() // Refresh product list after adding
       } catch (error) {
         console.error('Kunne ikke oprette produkt:', error)
       }

@@ -38,15 +38,24 @@ export default {
   methods: {
     async fetchProducts() {
       try {
-        const res = await fetch('https://localhost:7155/api/products')
+        // Toggle the API base URL here:
+        // const apiUrl = 'https://localhost:7155/api/products'; // LOCAL
+        const apiUrl = 'https://hoved-opgave-datamatiker.azurewebsites.net/api/products'; // AZURE
+
+        const res = await fetch(apiUrl)
+        if (!res.ok) throw new Error('Failed to load products')
         this.products = await res.json()
       } catch (error) {
-        alert('Failed to load products')
+        alert(error.message)
       }
     },
     async createProduct() {
       try {
-        const res = await fetch('https://localhost:7155/api/products', {
+        // Toggle API URL here too:
+        // const apiUrl = 'https://localhost:7155/api/products'; // LOCAL
+        const apiUrl = 'https://hoved-opgave-datamatiker.azurewebsites.net/api/products'; // AZURE
+
+        const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.newProduct)
@@ -62,7 +71,11 @@ export default {
     },
     async updateProduct(product) {
       try {
-        const res = await fetch(`https://localhost:7155/api/products/${product.id}`, {
+        // Toggle API URL here too:
+        // const apiUrl = 'https://localhost:7155/api/products'; // LOCAL
+        const apiUrl = 'https://hoved-opgave-datamatiker.azurewebsites.net/api/products'; // AZURE
+
+        const res = await fetch(`${apiUrl}/${product.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product)
@@ -76,7 +89,11 @@ export default {
     async deleteProduct(id) {
       if (!confirm('Are you sure you want to delete this product?')) return
       try {
-        const res = await fetch(`https://localhost:7155/api/products/${id}`, {
+        // Toggle API URL here too:
+        // const apiUrl = 'https://localhost:7155/api/products'; // LOCAL
+        const apiUrl = 'https://hoved-opgave-datamatiker.azurewebsites.net/api/products'; // AZURE
+
+        const res = await fetch(`${apiUrl}/${id}`, {
           method: 'DELETE'
         })
         if (!res.ok) throw new Error('Failed to delete product')

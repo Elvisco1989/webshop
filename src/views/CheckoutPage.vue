@@ -19,6 +19,9 @@
       </ul>
 
       <h3>Total: {{ order.orderTotal.toFixed(2) }} kr</h3>
+
+      <!-- Pay Now button -->
+      <button @click="goToPayment">Betal nu</button>
     </div>
     <div v-else>
       <p>Indlæser ordreinformation...</p>
@@ -39,6 +42,15 @@ export default {
     if (orderData) {
       this.order = JSON.parse(orderData)
     }
+  },
+  methods: {
+    goToPayment() {
+      if (this.order && this.order.orderId) {
+        this.$router.push({ name: 'Payment', params: { orderId: this.order.orderId } });
+      } else {
+        alert('Ordre ID ikke fundet.');
+      }
+    }
   }
 }
 </script>
@@ -51,5 +63,17 @@ export default {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+button {
+  margin-top: 1rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  background-color: #6772e5;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #5469d4;
 }
 </style>

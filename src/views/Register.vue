@@ -27,8 +27,14 @@ export default {
         this.message = "Passwords don't match"
         return
       }
+
       try {
-        const res = await fetch('https://localhost:7155/api/RegisterUser', {
+        // Toggle API URL here:
+         const apiUrl = 'https://localhost:7155/api/RegisterUser' // LOCAL
+        // const apiUrl = `${import.meta.env.VITE_API_URL}/api/RegisterUser`;
+ // AZURE
+
+        const res = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -38,6 +44,7 @@ export default {
             confirmPassword: this.confirmPassword
           })
         })
+
         if (res.ok) {
           this.message = 'Registration successful! Please log in.'
           this.email = ''

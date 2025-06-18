@@ -16,10 +16,20 @@ export default {
     };
   },
   mounted() {
-    fetch('https://localhost:7155/api/Products')
+    // === Toggle backend URL here ===
+    // For LOCAL testing, uncomment the line below:
+    const url = 'https://localhost:7155/api/Products';
+
+    // For AZURE deployment/testing, uncomment the line below:
+    // const url = 'https://hoved-opgave-datamatiker.azurewebsites.net/api/Products';
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         this.products = data;
+      })
+      .catch(err => {
+        console.error('Failed to fetch products:', err);
       });
   }
 };

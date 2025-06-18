@@ -36,29 +36,43 @@
 <router-link to="/about" class="nav-link">About Us</router-link>
 <router-link to="/contact" class="nav-link">Contact</router-link>
 <router-link to="/markets" class="nav-link">Markets</router-link>
+ <router-link to="/top-sales" class="nav-link">Top Sales</router-link>
+ <RouterLink to="/top-customers" class="nav-link">Top Customers</RouterLink>
+ <router-link to="/order-summary" class="nav-link">Order Summary</router-link>
+ <router-link to="/low-stock" class="nav-link">Low Stock</router-link>
+
+ 
+
+
+
+
 <router-link to="/brand" class="nav-link">Brand</router-link>
 <router-link to="/faq" class="nav-link">FAQ</router-link>
 <router-link to="/career" class="nav-link">Career</router-link>
 <router-link v-if="!isLoggedIn" to="/register" class="nav-link">Register</router-link>
-<div class="nav-dropdown">
-  <button class="nav-link" type="button">Products ▼</button>
-  <div class="dropdown-content">
-    <router-link to="/products" class="dropdown-item">View Products</router-link>
-    <router-link to="/products/create" class="dropdown-item">Add Product</router-link>
-    <router-link to="/products/update" class="dropdown-item">Update Product</router-link>
-    <router-link to="/products/delete" class="dropdown-item">Delete Product</router-link>
-  </div>
+<!-- Admin-only dropdowns -->
+<div v-if="isAdmin">
   <div class="nav-dropdown">
-  <button class="nav-link" type="button">Customers ▼</button>
-  <div class="dropdown-content">
-    <router-link to="/customers" class="dropdown-item">View Customers</router-link>
-    <router-link to="/customers/create" class="dropdown-item">Add Customer</router-link>
-     <router-link to="/customers/update" class="dropdown-item">Update Customer</router-link>
+    <button class="nav-link" type="button">Products ▼</button>
+    <div class="dropdown-content">
+      <router-link to="/products" class="dropdown-item">View Products</router-link>
+      <router-link to="/products/create" class="dropdown-item">Add Product</router-link>
+      <router-link to="/products/update" class="dropdown-item">Update Product</router-link>
+      <router-link to="/products/delete" class="dropdown-item">Delete Product</router-link>
+    </div>
+  </div>
+
+  <div class="nav-dropdown">
+    <button class="nav-link" type="button">Customers ▼</button>
+    <div class="dropdown-content">
+      <router-link to="/customers" class="dropdown-item">View Customers</router-link>
+      <router-link to="/customers/create" class="dropdown-item">Add Customer</router-link>
+      <router-link to="/customers/update" class="dropdown-item">Update Customer</router-link>
       <router-link to="/customers/delete" class="dropdown-item">Delete Customer</router-link>
+    </div>
   </div>
 </div>
 
-</div>
 
 <router-link v-if="!isLoggedIn" to="/login" class="nav-link">Login</router-link>
 <a v-else href="#" class="nav-link" @click.prevent="logout">Logout</a>
@@ -82,10 +96,16 @@ export default {
     }
   },
   computed: {
-    isLoggedIn() {
-      return localStorage.getItem('isLoggedIn') === 'true'
-    }
+  isLoggedIn() {
+    return localStorage.getItem('isLoggedIn') === 'true'
   },
+  isAdmin() {
+  const roles = JSON.parse(localStorage.getItem('role') || '[]')
+  return roles.includes('Admin') && roles.includes('Customer')
+}
+
+},
+
   mounted() {
     this.updateCartCount()
     window.addEventListener('storage', this.updateCartCount)
@@ -101,11 +121,13 @@ export default {
     logout() {
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('customerId')
+      localStorage.removeItem('role')
       this.$router.push('/login')
     }
   }
 }
 </script>
+
 
 <style scoped>
 .navbar {
